@@ -1,5 +1,5 @@
 <?php
-require_once './team_project/common/connect_cjd102g1.php';
+require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
 try {
     // 使用預處理語句，根據姓名查詢
