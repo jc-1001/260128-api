@@ -2,10 +2,10 @@
 // 1. 允許跨域請求 (讓 Vue 5173 能存取 MAMP 8888)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// 處理預檢請求 (OPTIONS)
+// 如果是預檢請求 (OPTIONS)，直接結束程式
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit;
 }
@@ -32,16 +32,15 @@ $data = json_decode(file_get_contents("php://input"), true);
 if ($data) {
     try {
         // 4. 準備 SQL 指令 (使用預處理語句防止 SQL 注入)
-        $sql = "INSERT INTO members (full_name, email, password, created_at, is_active) 
-                VALUES (:full_name, :email, :password, NOW(), 1)";
-        
+        $sql = "INSERT INTO members (full_name, email, password, created_at, account_status) 
+        VALUES (:full_name, :email, :password, NOW(), 1)";
+
         $stmt = $pdo->prepare($sql);
-        
-        // 5. 綁定參數並執行
+
         $stmt->execute([
             ':full_name' => $data['full_name'],
             ':email'     => $data['email'],
-            ':password'  => $data['password'] // 專案示範用，實務上應加密
+            ':password'  => $data['password']
         ]);
 
         echo json_encode(["success" => true, "message" => "註冊成功"]);

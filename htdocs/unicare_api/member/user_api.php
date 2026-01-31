@@ -2,6 +2,12 @@
 // 萬能跨域許可 (解決前後台不同 Port 問題)
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+// 如果是預檢請求 (OPTIONS)，直接結束程式
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit;
+}
 
 include 'db_config.php';
 
