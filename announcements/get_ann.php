@@ -1,4 +1,5 @@
 <?php
+// 取得系統公告資料庫中所有資料放到系統列表中
 require_once __DIR__ . '/../common/cors.php';
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
 

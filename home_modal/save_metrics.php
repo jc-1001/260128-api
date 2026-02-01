@@ -55,7 +55,7 @@ try {
             'at'  => $val['measured_at']
         ]);
     }
-    echo json_encode(["status" => "success"]);
+    echo json_encode(["success" => true,"status" => "success"]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(["err" => $e->getMessage()]);
