@@ -1,5 +1,5 @@
 <?php
-require_once 'common/conn.php';
+require_once './unicare_api/common/connect_cjd102g1.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">

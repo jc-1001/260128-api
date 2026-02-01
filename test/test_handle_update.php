@@ -1,5 +1,5 @@
 <?php
-require_once 'common/conn.php';
+require_once './unicare_api/common/connect_cjd102g1.php';
 
 // 確保是 POST 請求才執行
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
