@@ -16,7 +16,7 @@ try{
                 a.updated_at,
                 a.created_by_admin_id,
                 adm.admin_name
-            FROM Announcements a 
+            FROM announcements a 
             INNER JOIN Admins adm ON a.created_by_admin_id = adm.admin_id
             ORDER BY a.created_at DESC";
       

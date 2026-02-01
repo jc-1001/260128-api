@@ -8,7 +8,7 @@ $id = $_GET['id'] ?? null;
 try {
     // 加上 WHERE 條件，只抓這一個 ID
     $sql = "SELECT a.*, adm.admin_name 
-            FROM Announcements a 
+            FROM announcements a 
             INNER JOIN Admins adm ON a.created_by_admin_id = adm.admin_id
             WHERE a.announcement_id = :id";
       

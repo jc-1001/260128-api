@@ -4,7 +4,7 @@ require_once __DIR__ . '/../common/cors.php';
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
 try {
-    $sql = "SELECT * FROM Announcements ORDER BY created_at DESC";
+    $sql = "SELECT * FROM announcements ORDER BY created_at DESC";
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);

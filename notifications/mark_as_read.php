@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
     // 資料庫要變更is_read欄位，並對準該會員的ID
     // 執行更新
     try {
-        $sql = "UPDATE Notifications SET is_read = 1 WHERE notification_id = :id";
+        $sql = "UPDATE notifications SET is_read = 1 WHERE notification_id = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute(['id' => $noteId]);
 
