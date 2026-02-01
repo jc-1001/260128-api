@@ -1,16 +1,8 @@
 <?php
 declare(strict_types=1);
-
 ob_start();
-$allowedOrigin = 'http://localhost:5173';
-header("Access-Control-Allow-Origin: {$allowedOrigin}");
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-  http_response_code(204);
-  exit;
-}
+require_once __DIR__ . '/../common/cors.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -20,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   exit;
 }
 
-require_once __DIR__ . '/../common/connect_cjd102g1.php'; // ??賊??$pdo???秋撮??２? echo/print
+require_once __DIR__ . '/../common/connect_cjd102g1.php';
 session_start();
 
 $memberId = (int)($_SESSION['member_id'] ?? 1);
@@ -31,11 +23,11 @@ if ($memberId <= 0) {
   exit;
 }
 
-
 $medicationName = trim((string)($_POST['medication_name'] ?? ''));
 $note           = trim((string)($_POST['note'] ?? ''));
-$expiryDate     = trim((string)($_POST['expiry_date'] ?? '')); // YYYY-MM-DD ?謘曉??殉???
-$stockQtyRaw    = trim((string)($_POST['stock_qty'] ?? ''));   // decimal ?謘曉??殉???
+$expiryDate     = trim((string)($_POST['expiry_date'] ?? ''));
+$stockQtyRaw    = trim((string)($_POST['stock_qty'] ?? ''));
+$category       = trim((string)($_POST['category'] ?? ''));
 
 $scheduleInput = [
   'MORNING'  => ['instruction' => (string)($_POST['morning_instruction']  ?? ''), 'dose_qty' => (string)($_POST['morning_dose_qty']  ?? '')],
@@ -44,11 +36,17 @@ $scheduleInput = [
   'BEDTIME'  => ['instruction' => (string)($_POST['bedtime_instruction']  ?? ''), 'dose_qty' => (string)($_POST['bedtime_dose_qty']  ?? '')],
 ];
 
-
 if ($medicationName === '' || mb_strlen($medicationName) > 200) {
   http_response_code(400);
   ob_clean();
   echo json_encode(['error' => 'Invalid medication_name'], JSON_UNESCAPED_UNICODE);
+  exit;
+}
+
+if ($category === '' || mb_strlen($category) > 20) {
+  http_response_code(400);
+  ob_clean();
+  echo json_encode(['error' => 'Invalid category'], JSON_UNESCAPED_UNICODE);
   exit;
 }
 
@@ -81,7 +79,6 @@ if ($stockQtyRaw !== '') {
   }
 }
 
-
 $photoUrl = null;
 $savedAbsPath = null;
 
@@ -111,6 +108,7 @@ if (isset($_FILES['photo']) && is_array($_FILES['photo']) && ($_FILES['photo']['
     $imgInfo = getimagesize($_FILES['photo']['tmp_name']);
     $mime = $imgInfo['mime'] ?? null;
   }
+
   $allow = [
     'image/jpeg' => 'jpg',
     'image/png'  => 'png',
@@ -124,7 +122,7 @@ if (isset($_FILES['photo']) && is_array($_FILES['photo']) && ($_FILES['photo']['
   }
 
   $relDir = "/images/medications/{$memberId}";
-  $absDir = dirname(__DIR__) . $relDir; // ??260128-api ?蝞賃僕????遴?????剜???踝??駁??
+  $absDir = dirname(__DIR__) . $relDir;
 
   if (!is_dir($absDir) && !mkdir($absDir, 0755, true)) {
     http_response_code(500);
@@ -143,9 +141,8 @@ if (isset($_FILES['photo']) && is_array($_FILES['photo']) && ($_FILES['photo']['
     exit;
   }
 
-  $photoUrl = $relDir . '/' . $filename; // ?殉次謆????綜???leading slash??
+  $photoUrl = $relDir . '/' . $filename;
 }
-
 
 try {
   $pdo->beginTransaction();
@@ -160,7 +157,7 @@ try {
   $stmt = $pdo->prepare($sqlMed);
   $stmt->execute([
     ':member_id'       => $memberId,
-    ':category'        => (string)($_POST['category'] ?? '藥品'),
+    ':category'        => $category,
     ':medication_name' => $medicationName,
     ':photo_url'       => $photoUrl,
     ':expiry_date'     => $expiryDateVal,
@@ -184,17 +181,28 @@ try {
     $instruction = strtoupper(trim((string)$v['instruction']));
     $doseRaw     = trim((string)$v['dose_qty']);
 
-    if ($instruction === '' || $instruction === 'NONE' || $instruction === '無') {
+    if ($instruction === '' || $instruction === 'NONE') {
       continue;
     }
 
-    if (!in_array($instruction, ['BEFORE_MEAL','AFTER_MEAL','ANY','BEDTIME'], true)) {
-      http_response_code(400);
-      $pdo->rollBack();
-      if ($savedAbsPath && is_file($savedAbsPath)) @unlink($savedAbsPath);
-      ob_clean();
-      echo json_encode(['error' => "Invalid instruction: {$timeSlot}"], JSON_UNESCAPED_UNICODE);
-      exit;
+    if ($timeSlot === 'BEDTIME') {
+      if ($instruction !== 'BEDTIME') {
+        http_response_code(400);
+        $pdo->rollBack();
+        if ($savedAbsPath && is_file($savedAbsPath)) @unlink($savedAbsPath);
+        ob_clean();
+        echo json_encode(['error' => 'Invalid instruction: BEDTIME'], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+    } else {
+      if (!in_array($instruction, ['BEFORE_MEAL','AFTER_MEAL','ANY'], true)) {
+        http_response_code(400);
+        $pdo->rollBack();
+        if ($savedAbsPath && is_file($savedAbsPath)) @unlink($savedAbsPath);
+        ob_clean();
+        echo json_encode(['error' => "Invalid instruction: {$timeSlot}"], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
     }
 
     if ($doseRaw === '' || !is_numeric($doseRaw)) {
@@ -227,14 +235,12 @@ try {
 
   $pdo->commit();
 
-  
-
   ob_clean();
   echo json_encode([
     'data' => [
       'medication_id' => $medicationId,
-      'medication_name'  => $medicationName,
-      'photo_url'     => $photoUrl,
+      'medication_name' => $medicationName,
+      'photo_url' => $photoUrl,
       'schedules_created' => $created
     ]
   ], JSON_UNESCAPED_UNICODE);

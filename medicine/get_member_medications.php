@@ -1,16 +1,7 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/../common/cors.php';
 
-// CORS (dev)
-$allowedOrigin = 'http://localhost:5173';
-header("Access-Control-Allow-Origin: {$allowedOrigin}");
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-  http_response_code(204);
-  exit;
-}
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -23,7 +14,7 @@ require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
 session_start();
 $memberId = (int)($_SESSION['member_id'] ?? ($_GET['member_id'] ?? 1));
-$category = $_GET['category'] ?? '藥品';
+$category = $_GET['category'] ?? '?鈭?';
 
 if ($memberId <= 0) {
   http_response_code(400);
@@ -60,7 +51,7 @@ try {
       'medication_name' => $r['medication_name'],
       'photo_url'       => $r['photo_url'],
       'stock_qty'       => ($r['stock_qty'] === null ? null : (float)$r['stock_qty']),
-      'expiry_date'     => ($r['expiry_date'] === null || $r['expiry_date'] === '' ? '未知' : $r['expiry_date']),
+      'expiry_date'     => ($r['expiry_date'] === null || $r['expiry_date'] === '' ? '未填寫' : $r['expiry_date']),
     ];
   }, $rows);
 

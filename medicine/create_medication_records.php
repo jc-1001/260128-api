@@ -1,17 +1,7 @@
 <?php
 declare(strict_types=1);
-
 ob_start();
-
-$allowedOrigin = 'http://localhost:5173';
-header("Access-Control-Allow-Origin: {$allowedOrigin}");
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-  http_response_code(204);
-  exit;
-}
+require_once __DIR__ . '/../common/cors.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -54,7 +44,7 @@ try {
 
   $placeholders = implode(',', array_fill(0, count($scheduleIds), '?'));
   $sql = "
-    SELECT ms.schedule_id, ms.dose_qty
+    SELECT ms.schedule_id, ms.medication_id, ms.dose_qty
     FROM medication_schedules ms
     INNER JOIN medications m ON m.medication_id = ms.medication_id
     WHERE ms.schedule_id IN ({$placeholders})
@@ -83,6 +73,7 @@ try {
   ");
 
   $created = 0;
+  $consumedByMedication = [];
   foreach ($validRows as $row) {
     $doseQty = $row['dose_qty'] === null ? null : (float)$row['dose_qty'];
     $stmtIns->execute([
@@ -92,6 +83,33 @@ try {
       ':consumed_qty' => $doseQty,
     ]);
     $created++;
+
+    $medicationId = (int)$row['medication_id'];
+    $consume = $doseQty === null ? 0.0 : (float)$doseQty;
+    if ($consume > 0) {
+      $consumedByMedication[$medicationId] = ($consumedByMedication[$medicationId] ?? 0) + $consume;
+    }
+  }
+
+  if (!empty($consumedByMedication)) {
+    $stmtUpd = $pdo->prepare("
+      UPDATE medications
+      SET stock_qty = CASE
+        WHEN stock_qty IS NULL THEN NULL
+        WHEN stock_qty - :consume < 0 THEN 0
+        ELSE stock_qty - :consume
+      END
+      WHERE medication_id = :medication_id
+        AND member_id = :member_id
+    ");
+
+    foreach ($consumedByMedication as $medId => $consumeQty) {
+      $stmtUpd->execute([
+        ':consume' => $consumeQty,
+        ':medication_id' => $medId,
+        ':member_id' => $memberId,
+      ]);
+    }
   }
 
   $pdo->commit();

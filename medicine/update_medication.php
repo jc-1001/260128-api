@@ -1,17 +1,7 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/../common/cors.php';
 
-$allowedOrigin = 'http://localhost:5173';
-header("Access-Control-Allow-Origin: {$allowedOrigin}");
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-  http_response_code(204);
-  exit;
-}
-
-ob_start();
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -21,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   exit;
 }
 
-require_once __DIR__ . '/../common/connect_cjd102g1.php'; // ??賊??$pdo????echo/print
+require_once __DIR__ . '/../common/connect_cjd102g1.php'; // ???????$pdo?雓?????echo/print
 session_start();
 
 $memberId = (int)($_SESSION['member_id'] ?? 1);
