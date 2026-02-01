@@ -25,7 +25,7 @@ if ($_SERVER['SERVER_NAME'] == 'localhost' || $_SERVER['SERVER_NAME'] == '127.0.
   try {
     $pdo = new PDO($dsn, $db_user, $db_password);
     // 開發階段顯示成功訊息，上線後建議註解掉 echo
-    echo '<p style="color: green;">資料庫連線成功。</p>';
+    // echo '<p style="color: green;">資料庫連線成功。</p>';
     // 設定錯誤模式為 Exception
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
   } catch (PDOException $e) {
