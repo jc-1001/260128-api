@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once '../db_config.php'; // 確保路徑指向 MAMP 設定
+require_once './db_config.php'; // 確保路徑指向 MAMP 設定
 
 // 接收 JSON 資料
 $data = json_decode(file_get_contents("php://input"), true);
