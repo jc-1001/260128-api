@@ -130,7 +130,7 @@ try {
     foreach ($config['fields'] as $field) {
         $params[$field] = $data[$field];
     }
-    $params[$config['time_field']] = $measured_at . ':00';
+    $params[$config['time_field']] = $measured_at;
 
     $stmt = $pdo->prepare($sql);
     $result = $stmt->execute($params);
@@ -144,7 +144,7 @@ try {
         foreach ($config['fields'] as $field) {
             $responseData[$field] = $data[$field];
         }
-        $responseData['recorded_at'] = $measured_at . ':00';
+        $responseData['recorded_at'] = $measured_at;
 
         http_response_code(201);
         echo json_encode([
