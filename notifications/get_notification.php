@@ -5,7 +5,7 @@ require_once __DIR__ . '/../common/cors.php';
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
 try {
-    $sql = "SELECT * FROM Notifications WHERE member_id = 1 AND is_read = 0 ORDER BY created_at DESC";
+    $sql = "SELECT * FROM notifications WHERE member_id = 1 AND is_read = 0 ORDER BY created_at DESC";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute();

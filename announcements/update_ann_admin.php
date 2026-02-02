@@ -22,7 +22,7 @@ if (!$data) {
 
 try {
     // SQL語法更新
-    $sql = "UPDATE Announcements SET 
+    $sql = "UPDATE announcements SET 
                 title = :title, 
                 announcement_type = :type, 
                 content = :content, 

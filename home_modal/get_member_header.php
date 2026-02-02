@@ -6,7 +6,7 @@ require_once __DIR__ . '/../common/connect_cjd102g1.php';
 // 之後要改
 $member_id = 1;
 
-$sql = "SELECT full_name, gender FROM Members WHERE member_id = :mid";
+$sql = "SELECT full_name, gender FROM members WHERE member_id = :mid";
 $stmt = $pdo->prepare($sql);
 $stmt->execute(['mid' => $member_id]);
 $member = $stmt->fetch();
