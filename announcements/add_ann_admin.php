@@ -18,7 +18,7 @@ if (!$data || !isset($data['title'])) {
 
 try {
     // SQL 插入語法
-    $sql = "INSERT INTO Announcements (
+    $sql = "INSERT INTO announcements (
                 created_by_admin_id, 
                 title, 
                 announcement_type, 
