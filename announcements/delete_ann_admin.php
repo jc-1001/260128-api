@@ -13,7 +13,7 @@ if (!$id) {
 
 try {
     // 執行刪除
-    $sql = "DELETE FROM Announcements WHERE announcement_id = :id";
+    $sql = "DELETE FROM announcements WHERE announcement_id = :id";
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['id' => $id]);
 
