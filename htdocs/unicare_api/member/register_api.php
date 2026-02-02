@@ -5,52 +5,81 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
+// 增加錯誤回報，方便我們 Debug
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// 引用原本已設定好的連線檔
+include 'db_config.php';
+
 // 如果是預檢請求 (OPTIONS)，直接結束程式
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit;
 }
 
 // 2. 引入資料庫連線資訊 (建議將連線邏輯獨立成 db_config.php)
-$host = '127.0.0.1';
-$db   = 'unicare_db';
-$user = 'root';
-$pass = 'root'; // MAMP 預設密碼
-$port = 8889;   // MAMP 預設 Port
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;port=$port;charset=utf8mb4", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    echo json_encode(["success" => false, "message" => "資料庫連線失敗"]);
-    exit;
-}
-
-// 3. 接收並解析前端傳來的 JSON 資料
 $json = file_get_contents('php://input');
 $data = json_decode(file_get_contents("php://input"), true);
 
 if ($data) {
     try {
-        // 4. 準備 SQL 指令 (使用預處理語句防止 SQL 注入)
-        $sql = "INSERT INTO members (full_name, email, password, created_at, account_status) 
-        VALUES (:full_name, :email, :password, NOW(), 1)";
+        // 1. 先檢查 Email 是否重複
+        $checkStmt = $pdo->prepare("SELECT email FROM members WHERE email = ?");
+        $checkStmt->execute([$data['email']]);
+        if ($checkStmt->fetch()) {
+            echo json_encode(["status" => "error", "message" => "此 Email 已被註冊"]);
+            exit;
+        }
+
+        // 2. 準備 SQL 語句 (對齊 members (1).sql 欄位名稱)
+        $sql = "INSERT INTO members (
+            email, password, full_name, phone_number, gender, birth_date, 
+            role, account_status, height, weight, blood_type, 
+            has_chronic_disease, chronic_disease_description,
+            has_family_history, family_history_description,
+            has_allergies, allergy_description,
+            is_smoking, is_drinking,
+            contact_name, relationship, emergency_phone_number,
+            created_at
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, 
+            'member', 1, ?, ?, ?, 
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+            NOW()
+        )";
 
         $stmt = $pdo->prepare($sql);
 
+        // 3. 執行並處理布林值轉 1/0
         $stmt->execute([
-            ':full_name' => $data['full_name'],
-            ':email'     => $data['email'],
-            ':password'  => $data['password']
+            $data['email'],
+            $data['password'],
+            $data['full_name'],
+            $data['phone_number'] ?? null,
+            $data['gender'] ?? 'M',
+            $data['birth_date'] ?? null,
+            $data['height'] ?? null,
+            $data['weight'] ?? null,
+            $data['blood_type'] ?? 'A',
+            ($data['has_chronic_disease'] ?? false) ? 1 : 0,
+            $data['chronic_disease_description'] ?? null,
+            ($data['has_family_history'] ?? false) ? 1 : 0,
+            $data['family_history_description'] ?? null,
+            ($data['has_allergies'] ?? false) ? 1 : 0,
+            $data['allergy_description'] ?? null,
+            ($data['is_smoking'] ?? false) ? 1 : 0,
+            ($data['is_drinking'] ?? false) ? 1 : 0,
+            $data['contact_name'] ?? null,
+            $data['relationship'] ?? null,
+            $data['emergency_phone_number'] ?? null
         ]);
 
-        echo json_encode(["success" => true, "message" => "註冊成功"]);
+        echo json_encode(["status" => "success", "message" => "註冊成功"]);
+
     } catch (PDOException $e) {
-        // 檢查 email 是否重複
-        if ($e->getCode() == 23000) {
-            echo json_encode(["success" => false, "message" => "此 Email 已被註冊"]);
-        } else {
-            echo json_encode(["success" => false, "message" => "註冊失敗：" . $e->getMessage()]);
-        }
+        // 如果噴錯，會顯示具體的 SQL 錯誤訊息
+        echo json_encode(["status" => "error", "message" => "SQL錯誤: " . $e->getMessage()]);
     }
 } else {
     echo json_encode(["success" => false, "message" => "無效的請求資料"]);
