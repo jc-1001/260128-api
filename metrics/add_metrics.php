@@ -53,32 +53,28 @@ try {
         'heart_rate' => [
             'table' => 'blood_pressure_logs',
             'id_field' => 'bp_log_id',
-            'fields' => ['heart_rate', 'systolic_pressure', 'diastolic_pressure'],
+            'fields' => ['heart_rate', 'systolic_pressure', 'diastolic_pressure'],  // 🔥 需要血壓數據
             'time_field' => 'measured_at',
             'validation' => function($data) {
-                // 🔥 檢查所有三個欄位
-                if (!isset($data['heart_rate']) || !isset($data['systolic_pressure']) || !isset($data['diastolic_pressure'])) {
-                    return '請填寫完整的血壓和心律數值';
-                }
+                if (!isset($data['heart_rate'])) return '缺少心律數值';
                 if ($data['heart_rate'] < 30 || $data['heart_rate'] > 250) return '心律數值不合理';
-                if ($data['systolic_pressure'] < 50 || $data['systolic_pressure'] > 250) return '收縮壓數值不合理';
-                if ($data['diastolic_pressure'] < 30 || $data['diastolic_pressure'] > 150) return '舒張壓數值不合理';
+                // 🔥 心律存在血壓表中，需要同時提供血壓數值（可以設為 0 或預設值）
+                if (!isset($data['systolic_pressure'])) $data['systolic_pressure'] = 0;
+                if (!isset($data['diastolic_pressure'])) $data['diastolic_pressure'] = 0;
                 return null;
             }
         ],
         'blood_pressure' => [
             'table' => 'blood_pressure_logs',
             'id_field' => 'bp_log_id',
-            'fields' => ['systolic_pressure', 'diastolic_pressure', 'heart_rate'],
+            'fields' => ['systolic_pressure', 'diastolic_pressure', 'heart_rate'],  // 🔥 加入心律
             'time_field' => 'measured_at',
             'validation' => function($data) {
-                // 🔥 檢查所有三個欄位
-                if (!isset($data['systolic_pressure']) || !isset($data['diastolic_pressure']) || !isset($data['heart_rate'])) {
-                    return '請填寫完整的血壓和心律數值';
-                }
+                if (!isset($data['systolic_pressure']) || !isset($data['diastolic_pressure'])) return '缺少血壓數值';
                 if ($data['systolic_pressure'] < 50 || $data['systolic_pressure'] > 250) return '收縮壓數值不合理';
                 if ($data['diastolic_pressure'] < 30 || $data['diastolic_pressure'] > 150) return '舒張壓數值不合理';
-                if ($data['heart_rate'] < 30 || $data['heart_rate'] > 250) return '心律數值不合理';
+                // 🔥 如果沒提供心律，設為 0
+                if (!isset($data['heart_rate'])) $data['heart_rate'] = 0;
                 return null;
             }
         ]
@@ -105,15 +101,10 @@ try {
         exit();
     }
 
-    // 🔥 執行驗證
     $validationError = $config['validation']($data);
     if ($validationError) {
         http_response_code(400);
-        echo json_encode([
-            'success' => false, 
-            'message' => $validationError,
-            'received_data' => $data  // 🔥 除錯用：顯示收到的資料
-        ], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['success' => false, 'message' => $validationError], JSON_UNESCAPED_UNICODE);
         exit();
     }
 
@@ -139,7 +130,7 @@ try {
     foreach ($config['fields'] as $field) {
         $params[$field] = $data[$field];
     }
-    $params[$config['time_field']] = $measured_at;
+    $params[$config['time_field']] = $measured_at . ':00';
 
     $stmt = $pdo->prepare($sql);
     $result = $stmt->execute($params);
@@ -168,13 +159,6 @@ try {
     echo json_encode([
         'success' => false,
         'message' => '資料庫錯誤',
-        'details' => $e->getMessage()
-    ], JSON_UNESCAPED_UNICODE);
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => '伺服器錯誤',
         'details' => $e->getMessage()
     ], JSON_UNESCAPED_UNICODE);
 }

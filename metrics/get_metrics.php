@@ -21,38 +21,38 @@ try {
     }
 
     // 🔥 根據實際資料庫結構定義
-$metricsConfig = [
-    'weight' => [
-        'table' => 'weight_logs',
-        'id_field' => 'weight_log_id',
-        'value_fields' => ['weight'],
-        'time_field' => 'measured_at'
-    ],
-    'blood_oxygen' => [
-        'table' => 'blood_oxygen_logs',
-        'id_field' => 'oximetry_log_id',
-        'value_fields' => ['oxygen_saturation'],
-        'time_field' => 'measured_at'
-    ],
-    'blood_sugar' => [
-        'table' => 'blood_sugar_logs',
-        'id_field' => 'glucose_log_id',
-        'value_fields' => ['glucose_value'],
-        'time_field' => 'measured_at'
-    ],
-    'heart_rate' => [
-        'table' => 'blood_pressure_logs',
-        'id_field' => 'bp_log_id',
-        'value_fields' => ['heart_rate', 'systolic_pressure', 'diastolic_pressure'],  // 🔥 包含全部三個
-        'time_field' => 'measured_at'
-    ],
-    'blood_pressure' => [
-        'table' => 'blood_pressure_logs',
-        'id_field' => 'bp_log_id',
-        'value_fields' => ['systolic_pressure', 'diastolic_pressure', 'heart_rate'],  // 🔥 包含全部三個
-        'time_field' => 'measured_at'
-    ]
-];
+    $metricsConfig = [
+        'weight' => [
+            'table' => 'weight_logs',
+            'id_field' => 'weight_log_id',
+            'value_fields' => ['weight'],
+            'time_field' => 'measured_at'
+        ],
+        'blood_oxygen' => [
+            'table' => 'blood_oxygen_logs',
+            'id_field' => 'oximetry_log_id',
+            'value_fields' => ['oxygen_saturation'],
+            'time_field' => 'measured_at'
+        ],
+        'blood_sugar' => [
+            'table' => 'blood_sugar_logs',
+            'id_field' => 'glucose_log_id',
+            'value_fields' => ['glucose_value'],
+            'time_field' => 'measured_at'
+        ],
+        'heart_rate' => [
+            'table' => 'blood_pressure_logs',  // 🔥 心律在血壓表中
+            'id_field' => 'bp_log_id',
+            'value_fields' => ['heart_rate'],
+            'time_field' => 'measured_at'
+        ],
+        'blood_pressure' => [
+            'table' => 'blood_pressure_logs',
+            'id_field' => 'bp_log_id',
+            'value_fields' => ['systolic_pressure', 'diastolic_pressure'],
+            'time_field' => 'measured_at'
+        ]
+    ];
 
     if (!isset($metricsConfig[$type])) {
         http_response_code(400);
@@ -70,7 +70,7 @@ $metricsConfig = [
     
     $sql = "SELECT 
                 " . implode(', ', $selectFields) . ",
-                DATE_FORMAT({$config['time_field']}, '%Y-%m-%d %H:%i') as recorded_at
+                DATE_FORMAT({$config['time_field']}, '%Y-%m-%d %H:%i:%s') as recorded_at
             FROM {$config['table']} 
             WHERE member_id = :member_id 
             ORDER BY {$config['time_field']} DESC";
