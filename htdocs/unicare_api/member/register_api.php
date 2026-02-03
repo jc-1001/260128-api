@@ -17,10 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit;
 }
 
-// 2. 引入資料庫連線資訊 (建議將連線邏輯獨立成 db_config.php)
-
 $json = file_get_contents('php://input');
-$data = json_decode(file_get_contents("php://input"), true);
+$data = json_decode($json, true);
 
 if ($data) {
     try {
@@ -32,33 +30,39 @@ if ($data) {
             exit;
         }
 
-        // 2. 準備 SQL 語句 (對齊 members (1).sql 欄位名稱)
-        $sql = "INSERT INTO members (
+        // 2. 準備 SQL 指令
+        $sql_member = "INSERT INTO members (
             email, password, full_name, phone_number, gender, birth_date, 
             role, account_status, height, weight, blood_type, 
             has_chronic_disease, chronic_disease_description,
             has_family_history, family_history_description,
             has_allergies, allergy_description,
             is_smoking, is_drinking,
-            contact_name, relationship, emergency_phone_number,
             created_at
         ) VALUES (
             ?, ?, ?, ?, ?, ?, 
             'member', 1, ?, ?, ?, 
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+            ?, ?, ?, ?, ?, ?, ?, ?, 
             NOW()
         )";
 
-        $stmt = $pdo->prepare($sql);
+        $sql_contact = "INSERT INTO emergency_contacts (
+            member_id, contact_name, relationship, phone_number
+        ) VALUES (?, ?, ?, ?)";
 
-        // 3. 執行並處理布林值轉 1/0
-        $stmt->execute([
+        // 開啟事務處理
+        $pdo->beginTransaction();
+
+        // 執行會員寫入
+        $stmt_member = $pdo->prepare($sql_member);
+        $stmt_member->execute([
             $data['email'],
             $data['password'],
             $data['full_name'],
             $data['phone_number'] ?? null,
             $data['gender'] ?? 'M',
-            $data['birth_date'] ?? null,
+            (!empty($data['birth_date'])) ? $data['birth_date'] : null,
+            // ----------------------------------------------
             $data['height'] ?? null,
             $data['weight'] ?? null,
             $data['blood_type'] ?? 'A',
@@ -69,19 +73,32 @@ if ($data) {
             ($data['has_allergies'] ?? false) ? 1 : 0,
             $data['allergy_description'] ?? null,
             ($data['is_smoking'] ?? false) ? 1 : 0,
-            ($data['is_drinking'] ?? false) ? 1 : 0,
-            $data['contact_name'] ?? null,
-            $data['relationship'] ?? null,
-            $data['emergency_phone_number'] ?? null
+            ($data['is_drinking'] ?? false) ? 1 : 0
         ]);
 
+        // 取得剛剛生成的會員編號
+        $new_member_id = $pdo->lastInsertId();
+
+        // 執行緊急聯絡人寫入
+        $stmt_contact = $pdo->prepare($sql_contact);
+        $stmt_contact->execute([
+            $new_member_id,
+            $data['contact_name'] ?? '',
+            $data['relationship'] ?? '',
+            $data['emergency_phone_number'] ?? ''
+        ]);
+
+        // 提交變更
+        $pdo->commit();
         echo json_encode(["status" => "success", "message" => "註冊成功"]);
 
     } catch (PDOException $e) {
-        // 如果噴錯，會顯示具體的 SQL 錯誤訊息
-        echo json_encode(["status" => "error", "message" => "SQL錯誤: " . $e->getMessage()]);
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        echo json_encode(["status" => "error", "message" => "註冊失敗: " . $e->getMessage()]);
     }
 } else {
-    echo json_encode(["success" => false, "message" => "無效的請求資料"]);
+    echo json_encode(["status" => "error", "message" => "無效的請求資料"]);
 }
 ?>

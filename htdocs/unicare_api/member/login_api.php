@@ -27,24 +27,29 @@ if (empty($email) || empty($password)) {
 }
 
 try {
-    // 嚴格對照 ER-Model 表名: Members
-    $stmt = $pdo->prepare("SELECT * FROM Members WHERE email = ? AND password = ?");
+    // 使用 LEFT JOIN 同時抓取會員資料與緊急聯絡人資料
+    $sql = "SELECT 
+                m.*, 
+                ec.contact_name, 
+                ec.relationship, 
+                ec.phone_number AS emergency_phone_number
+            FROM members m
+            LEFT JOIN emergency_contacts ec ON m.member_id = ec.member_id
+            WHERE m.email = ? AND m.password = ?";
+
+    $stmt = $pdo->prepare($sql);
     $stmt->execute([$email, $password]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        // 檢查 account_status (1: 正常, 0: 停用)
         if ($user['account_status'] == 1) {
+            // 這裡回傳所有欄位給前端存入 localStorage
             echo json_encode([
-                "status" => "success", // 這裡改為 status 解決 undefined 問題
-                "user" => [
-                    "email" => $user['email'],
-                    "full_name" => $user['full_name'],
-                    "account_status" => $user['account_status']
-                ]
+                "status" => "success",
+                "user" => $user // 直接回傳整個 $user 陣列，包含身高、體重、聯絡人等
             ]);
         } else {
-            echo json_encode(["status" => "error", "message" => "該帳號已被停用，請洽管理員"]);
+            echo json_encode(["status" => "error", "message" => "該帳號已被停用"]);
         }
     } else {
         echo json_encode(["status" => "error", "message" => "電子信箱或密碼錯誤"]);
