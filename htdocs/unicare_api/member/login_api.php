@@ -1,7 +1,6 @@
 <?php
 include 'db_config.php'; 
 
-// 設定 Header
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
@@ -11,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit;
 }
 
-// 接收來自 Vue (Axios) 的 JSON 資料
+// 接收 Vue (Axios) 的 JSON 
 $data = json_decode(file_get_contents("php://input"), true);
 $email = $data['email'] ?? '';
 $password = $data['password'] ?? '';
@@ -22,12 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 if (empty($email) || empty($password)) {
-    echo json_encode(["status" => "error", "message" => "請輸入帳號與密碼"]);
+    echo json_encode(["status" => "error", "message" => "請輸入帳號密碼"]);
     exit;
 }
 
 try {
-    // 使用 LEFT JOIN 同時抓取會員資料與緊急聯絡人資料
+    // 同時撈會員與緊急聯絡人資料
     $sql = "SELECT 
                 m.*, 
                 ec.contact_name, 
@@ -43,16 +42,16 @@ try {
 
     if ($user) {
         if ($user['account_status'] == 1) {
-            // 這裡回傳所有欄位給前端存入 localStorage
+            // 這邊回傳所有欄位給前端的 localStorage
             echo json_encode([
                 "status" => "success",
-                "user" => $user // 直接回傳整個 $user 陣列，包含身高、體重、聯絡人等
+                "user" => $user // 回傳整個 $user 陣列，包含身高、體重與聯絡人
             ]);
         } else {
             echo json_encode(["status" => "error", "message" => "該帳號已被停用"]);
         }
     } else {
-        echo json_encode(["status" => "error", "message" => "電子信箱或密碼錯誤"]);
+        echo json_encode(["status" => "error", "message" => "帳號或密碼錯誤"]);
     }
 } catch (PDOException $e) {
     echo json_encode(["status" => "error", "message" => "SQL 錯誤: " . $e->getMessage()]);

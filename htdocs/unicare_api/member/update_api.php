@@ -32,8 +32,7 @@ if ($data && isset($data['email'])) {
             $data['email']
         ]);
 
-        // 2. 更新 emergency_contacts 表
-        // 先找出該 email 對應的 member_id
+        // 2. 更新 emergency_contacts ， 先找 email > member_id
         $stmt_id = $pdo->prepare("SELECT member_id FROM members WHERE email = ?");
         $stmt_id->execute([$data['email']]);
         $member_id = $stmt_id->fetchColumn();
@@ -52,7 +51,7 @@ if ($data && isset($data['email'])) {
         }
 
         $pdo->commit();
-        echo json_encode(["status" => "success", "message" => "資料更新成功"]);
+        echo json_encode(["status" => "success", "message" => "更新成功"]);
 
     } catch (PDOException $e) {
         $pdo->rollBack();

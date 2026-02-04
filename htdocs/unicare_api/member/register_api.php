@@ -1,18 +1,18 @@
 <?php
-// 1. 允許跨域請求 (讓 Vue 5173 能存取 MAMP 8888)
+// 1. 允許跨域請求 (本地存資料庫)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// 增加錯誤回報，方便我們 Debug
+// 報錯
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// 引用原本已設定好的連線檔
+// 引用連線檔
 include 'db_config.php';
 
-// 如果是預檢請求 (OPTIONS)，直接結束程式
+// 如果是預檢請求 (OPTIONS)，請直接結束程式
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit;
 }
@@ -22,7 +22,7 @@ $data = json_decode($json, true);
 
 if ($data) {
     try {
-        // 1. 先檢查 Email 是否重複
+        // 1. 檢查帳號是否重複
         $checkStmt = $pdo->prepare("SELECT email FROM members WHERE email = ?");
         $checkStmt->execute([$data['email']]);
         if ($checkStmt->fetch()) {
@@ -30,7 +30,7 @@ if ($data) {
             exit;
         }
 
-        // 2. 準備 SQL 指令
+        // 2. SQL 指令
         $sql_member = "INSERT INTO members (
             email, password, full_name, phone_number, gender, birth_date, 
             role, account_status, height, weight, blood_type, 
@@ -53,7 +53,7 @@ if ($data) {
         // 開啟事務處理
         $pdo->beginTransaction();
 
-        // 執行會員寫入
+        // 寫入會員
         $stmt_member = $pdo->prepare($sql_member);
         $stmt_member->execute([
             $data['email'],
@@ -76,10 +76,10 @@ if ($data) {
             ($data['is_drinking'] ?? false) ? 1 : 0
         ]);
 
-        // 取得剛剛生成的會員編號
+        // 取得會員編號
         $new_member_id = $pdo->lastInsertId();
 
-        // 執行緊急聯絡人寫入
+        // 緊急聯絡人寫入
         $stmt_contact = $pdo->prepare($sql_contact);
         $stmt_contact->execute([
             $new_member_id,
@@ -88,7 +88,7 @@ if ($data) {
             $data['emergency_phone_number'] ?? ''
         ]);
 
-        // 提交變更
+        // 提交
         $pdo->commit();
         echo json_encode(["status" => "success", "message" => "註冊成功"]);
 
@@ -99,7 +99,7 @@ if ($data) {
         echo json_encode(["status" => "error", "message" => "註冊失敗: " . $e->getMessage()]);
     }
 } else {
-    echo json_encode(["status" => "error", "message" => "無效的請求資料"]);
+    echo json_encode(["status" => "error", "message" => "無效的請求"]);
 }
 
 ?>

@@ -11,10 +11,9 @@ require_once '../db_config.php'; // 引入 MAMP 資料庫設定
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-// 根據 ER 模型：帳號是 email，密碼是 password
+// 根據 ER 模型的帳號 email跟密碼 password
 if (isset($data['account']) && isset($data['password'])) {
     try {
-        // 修正：欄位名稱對齊 admin_id 和 admin_name
         $sql = "SELECT admin_id, admin_name FROM admins WHERE email = :acc AND password = :pwd LIMIT 1";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':acc' => $data['account'], ':pwd' => $data['password']]);
@@ -25,7 +24,7 @@ if (isset($data['account']) && isset($data['password'])) {
                 "success" => true,
                 "user" => [
                     "admin_id" => $admin['admin_id'],
-                    "full_name" => $admin['admin_name'] // 統一傳給前端的 key
+                    "full_name" => $admin['admin_name'] // key 傳給前端
                 ]
             ]);
         } else {
