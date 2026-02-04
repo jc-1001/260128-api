@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 // 接收 Vue 傳來的 member_id
 $member_id = isset($_GET['member_id']) ? $_GET['member_id'] : 1;
 try {
-    $sql = "SELECT * FROM Diet_Logs WHERE member_id = :member_id ORDER BY meal_date DESC";
+    $sql = "SELECT * FROM diet_Logs WHERE member_id = :member_id ORDER BY meal_date DESC";
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['member_id' => $member_id]);
     $allRecords = [];
