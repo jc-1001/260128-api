@@ -56,4 +56,5 @@ try {
 } catch (PDOException $e) {
     echo json_encode(["status" => "error", "message" => "SQL 錯誤: " . $e->getMessage()]);
 }
+
 ?>
