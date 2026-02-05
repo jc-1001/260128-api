@@ -22,7 +22,7 @@ $member_id = 1; // 實務上應從 session 或 token 取得(之後要改)
 
 try {
     if ($type === 'bloodPressure') {
-        $sql = "INSERT INTO Blood_Pressure_Logs (member_id, systolic_pressure, diastolic_pressure, heart_rate, measured_at) 
+        $sql = "INSERT INTO blood_pressure_logs (member_id, systolic_pressure, diastolic_pressure, heart_rate, measured_at) 
             VALUES (:mid, :systolic_pressure, :diastolic_pressure, :hr, :at)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
@@ -34,9 +34,9 @@ try {
         ]);
     } else {
         $tableMap = [
-            'weight'      => ['table' => 'weight_logs', 'col' => 'weight'], // 修正
-            'bloodOxygen' => ['table' => 'Blood_Oxygen_Logs', 'col' => 'oxygen_saturation'], // 修正
-            'bloodSugar'  => ['table' => 'Blood_Sugar_Logs', 'col' => 'glucose_value'] // 修正
+            'weight'      => ['table' => 'weight_logs', 'col' => 'weight'], 
+            'bloodOxygen' => ['table' => 'blood_oxygen_logs', 'col' => 'oxygen_saturation'], 
+            'bloodSugar'  => ['table' => 'blood_sugar_logs', 'col' => 'glucose_value'] 
         ];
         if (!isset($tableMap[$type])) {
             throw new Exception("不支援的記錄類型: " . $type);
@@ -55,7 +55,7 @@ try {
             'at'  => $val['measured_at']
         ]);
     }
-    echo json_encode(["status" => "success"]);
+    echo json_encode(["success" => true,"status" => "success"]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(["err" => $e->getMessage()]);
