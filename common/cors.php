@@ -6,6 +6,7 @@
 $allowed_origins = [
     "http://localhost:5173",
     "http://localhost:5174",
+    "http://localhost:5175",
     "http://localhost:8888",
     "https://tibamef2e.com",
     "https://fc28ef460f6f.ngrok-free.app", // 給 Ngrok 測試用
