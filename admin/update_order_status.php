@@ -78,7 +78,7 @@ try {
     $content = '';
 
     // 判斷狀態
-    if ($status == '已出貨') {
+    if ($status == '配送中') {
       $content = "您的訂單 {$orderNumber} 已出貨！商品即將送達，請留意收件。";
     } elseif ($status == '已取消') {
       $content = "您的訂單 {$orderNumber} 已取消，如有疑問請聯繫客服。";
