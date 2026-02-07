@@ -22,8 +22,10 @@ try {
   // rand(100, 999) = 隨機三碼 (避免同一秒有人同時下單重複)
   $order_number = 'ORD-'.date('YmdHis').'-'.rand(100,999);
 
-  // 2.會員id ================== 先模擬一個會員id
-  $member_id = 1;
+
+  // $member_id = 1;
+  // 會員大改
+  $member_id = isset($data['member_id']) ? intval($data['member_id']) : 0;
 
   // 準備SQL
   $sql_order = "INSERT INTO orders(
