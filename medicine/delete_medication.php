@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+ob_start();
 require_once __DIR__ . '/../common/cors.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -14,12 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
 session_start();
 
-$memberId = (int)($_SESSION['member_id'] ?? 1);
+$memberId = (int)($_GET['member_id'] ?? ($_POST['member_id'] ?? ($_SESSION['member_id'] ?? 0)));
 
 if ($memberId <= 0) {
   $isLocal = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
-  $memberId = (int)($_POST['member_id'] ?? 1);
-
+  $memberId = (int)($_GET['member_id'] ?? ($_POST['member_id'] ?? ($_SESSION['member_id'] ?? 0)));
   if (!$isLocal || $memberId <= 0) {
     http_response_code(401);
     ob_clean();
