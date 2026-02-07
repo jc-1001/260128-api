@@ -1,15 +1,14 @@
 <?php
 // 跨域許可
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+require_once __DIR__ . '/../common/cors.php';
+require_once __DIR__ . '/../common/connect_cjd102g1.php';
+
 
 // 如果是預檢請求 (OPTIONS)，直接結束程式
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit;
 }
 
-include 'db_config.php';
 
 try {
     // 撈取會員資料

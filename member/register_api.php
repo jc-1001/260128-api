@@ -1,16 +1,12 @@
 <?php
-// 1. 允許跨域請求 (本地存資料庫)
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+require_once __DIR__ . '/../common/cors.php';
+require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
 // 報錯
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// 引用連線檔
-include 'db_config.php';
 
 // 如果是預檢請求 (OPTIONS)，請直接結束程式
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {

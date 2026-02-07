@@ -1,22 +1,17 @@
 <?php
 // toggle_status_api.php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+require_once __DIR__ . '/../common/cors.php';
+require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
 // 預檢請求 (Preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once './db_config.php'; // 確保路徑指向 MAMP 設定
 
 // 接收 JSON 資料
 $data = json_decode(file_get_contents("php://input"), true);
-
-// 檢查必要參數
-if (isset($data['member_id']) && isset($data['new_status'])) {
+if (array_key_exists('member_id', $data) && array_key_exists('new_status', $data))  {
     try {
         $sql = "UPDATE members SET account_status = :new_status WHERE member_id = :member_id";
         
