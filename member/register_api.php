@@ -1,0 +1,129 @@
+<?php
+
+require_once __DIR__ . '/../common/cors.php';
+require_once __DIR__ . '/../common/connect_cjd102g1.php';
+
+// 報錯
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+
+// 如果是預檢請求 (OPTIONS)，請直接結束程式
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit;
+}
+
+$json = file_get_contents('php://input');
+$data = json_decode($json, true);
+
+if ($data) {
+    try {
+        // 1. 檢查帳號是否重複
+        $checkStmt = $pdo->prepare("SELECT email FROM members WHERE email = ?");
+        $checkStmt->execute([$data['email']]);
+        if ($checkStmt->fetch()) {
+            echo json_encode(["status" => "error", "message" => "此 Email 已被註冊"]);
+            exit;
+        }
+
+        // 2. SQL 指令
+        $sql_member = "INSERT INTO members (
+            email, password, full_name, phone_number, gender, birth_date, 
+            role, account_status, height, weight, blood_type, 
+            has_chronic_disease, chronic_disease_description,
+            has_family_history, family_history_description,
+            has_allergies, allergy_description,
+            is_smoking, is_drinking,
+            created_at
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, 
+            'member', 1, ?, ?, ?, 
+            ?, ?, ?, ?, ?, ?, ?, ?, 
+            NOW()
+        )";
+
+        $sql_contact = "INSERT INTO emergency_contacts (
+            member_id, contact_name, relationship, phone_number
+        ) VALUES (?, ?, ?, ?)";
+
+        // 開啟事務處理
+        $pdo->beginTransaction();
+
+        // 寫入會員
+        $stmt_member = $pdo->prepare($sql_member);
+        $stmt_member->execute([
+            $data['email'],
+            $data['password'],
+            $data['full_name'],
+            $data['phone_number'] ?? null,
+            $data['gender'] ?? 'M',
+            (!empty($data['birth_date'])) ? $data['birth_date'] : null,
+            // ----------------------------------------------
+            $data['height'] ?? null,
+            $data['weight'] ?? null,
+            $data['blood_type'] ?? 'A',
+            ($data['has_chronic_disease'] ?? false) ? 1 : 0,
+            $data['chronic_disease_description'] ?? null,
+            ($data['has_family_history'] ?? false) ? 1 : 0,
+            $data['family_history_description'] ?? null,
+            ($data['has_allergies'] ?? false) ? 1 : 0,
+            $data['allergy_description'] ?? null,
+            ($data['is_smoking'] ?? false) ? 1 : 0,
+            ($data['is_drinking'] ?? false) ? 1 : 0
+        ]);
+
+        // 取得會員編號
+        $new_member_id = $pdo->lastInsertId();
+
+        // 緊急聯絡人寫入
+        $stmt_contact = $pdo->prepare($sql_contact);
+        $stmt_contact->execute([
+            $new_member_id,
+            $data['contact_name'] ?? '',
+            $data['relationship'] ?? '',
+            $data['emergency_phone_number'] ?? ''
+        ]);
+
+        // 提交
+        $pdo->commit();
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        echo json_encode(["status" => "error", "message" => "註冊失敗: " . $e->getMessage()]);
+        exit; // 註冊失敗就直接結束 BY:游
+    }
+
+    // 🔔!!【第二段：註冊禮與小鈴鐺通知】BY:游
+    // 只有註冊成功才會跑到這裡
+
+    if (isset($new_member_id)) {
+        try {
+            // 給予積分(寫進去資料庫)
+            $sqlPoints = "UPDATE members SET points = points + 500 WHERE member_id = ?";
+            $pdo->prepare($sqlPoints)->execute([$new_member_id]);
+
+            // 寫入通知訊息
+            $sqlNotice = "INSERT INTO notifications (member_id, title, content, is_read, created_at) 
+                          VALUES (?, ?, ?, 0, NOW())";
+            $stmtNotice = $pdo->prepare($sqlNotice);
+            $stmtNotice->execute([
+                $new_member_id,
+                '🎉 歡迎加入 UniCare！',
+                '恭喜您獲得新會員禮 500 點積分！已自動發放至您的帳戶。'
+            ]);
+        } catch (Exception $e) {
+            // 通知失敗只紀錄 Log，不回傳error，因為註冊成功
+            error_log("通知與積分發送失敗: " . $e->getMessage());
+        }
+    }
+
+    // 最後統一回傳成功訊息
+    echo json_encode(["status" => "success", "message" => "註冊成功"]);
+
+} else {
+    echo json_encode(["status" => "error", "message" => "無效的請求"]);
+}
+
+
+

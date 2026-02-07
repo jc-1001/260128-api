@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../common/cors.php';
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
+require_once __DIR__ . '/../notifications/send_notification.php';
 
 try {
   $json = file_get_contents('php://input');
@@ -47,6 +48,13 @@ try {
 
   // 拿到最新的order_id，之後才能填進order_items 和 point_transactions
   $new_order_id = $pdo->lastInsertId();
+
+  // 準備通知
+  $title = "訂單成立通知";
+  $content = "您的訂單 {$order_number} 已成功建立！我們將盡快為您安排出貨。";
+
+  // 發送通知 ($member_id 應該是妳從 session 或 token 拿到的當前使用者 ID)
+  sendNotification($pdo, $member_id, $title, $content);
 
   // 處理每一個商品(訂單明細 + 扣庫存) ======================
 
@@ -125,4 +133,4 @@ try {
     ["error" => "訂單建立失敗: " . $e->getMessage()]
   );
   }
-?>
+?>  

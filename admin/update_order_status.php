@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../common/cors.php';
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
+require_once __DIR__ . '/../notifications/send_notification.php';
 
 // 需求
 // 一般狀態切換(備貨中 / 已出貨)
@@ -62,6 +63,33 @@ try {
     $stmt->execute([$status, $id]);
   }
 
+  // 訂單通知
+  $sql_info = "SELECT member_id, order_number FROM orders WHERE order_id = ?";
+  $stmt_info = $pdo->prepare($sql_info);
+  $stmt_info->execute([$id]);
+  $orderInfo = $stmt_info->fetch(PDO::FETCH_ASSOC);
+
+  if($orderInfo) {
+    $memberId = $orderInfo['member_id'];
+    $orderNumber = $orderInfo['order_number'];
+
+    // 準備通知內容
+    $title = '訂單狀態更新';
+    $content = '';
+
+    // 判斷狀態
+    if ($status == '配送中') {
+      $content = "您的訂單 {$orderNumber} 已出貨！商品即將送達，請留意收件。";
+    } elseif ($status == '已取消') {
+      $content = "您的訂單 {$orderNumber} 已取消，如有疑問請聯繫客服。";
+    }
+
+    // 發送通知
+    if (!empty($content)) {
+      sendNotification($pdo, $memberId, $title, $content);
+    }
+  }
+
   echo json_encode([
     'success' => true,
     'message' => '狀態更新成功!'
@@ -69,7 +97,7 @@ try {
 
 } catch(Exception $e) {
   // 訂單取消失敗的話，交易要rollback()
-  if($pdo->inTransaction) {
+  if($pdo->inTransaction()) {
     $pdo->rollback();
   }
 
