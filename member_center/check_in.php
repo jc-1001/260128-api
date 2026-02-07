@@ -2,7 +2,10 @@
 require_once __DIR__ . '/../common/cors.php';
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
-$member_id = 1;
+// 會員大改 =============
+$data = json_decode(file_get_contents('php://input'), true);
+$member_id = isset($data['member_id']) ? intval($data['member_id']) : 0;
+// $member_id = 1;
 
 // 簽到會得到的獎勵積分
 $reward_points = 50;
