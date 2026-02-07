@@ -91,32 +91,9 @@ if ($data) {
             $pdo->rollBack();
         }
         echo json_encode(["status" => "error", "message" => "註冊失敗: " . $e->getMessage()]);
-        exit; // 註冊失敗就直接結束 BY:游
+        exit;
     }
 
-    // 🔔!!【第二段：註冊禮與小鈴鐺通知】BY:游
-    // 只有註冊成功才會跑到這裡
-
-    if (isset($new_member_id)) {
-        try {
-            // 給予積分(寫進去資料庫)
-            $sqlPoints = "UPDATE members SET points = points + 500 WHERE member_id = ?";
-            $pdo->prepare($sqlPoints)->execute([$new_member_id]);
-
-            // 寫入通知訊息
-            $sqlNotice = "INSERT INTO notifications (member_id, title, content, is_read, created_at) 
-                          VALUES (?, ?, ?, 0, NOW())";
-            $stmtNotice = $pdo->prepare($sqlNotice);
-            $stmtNotice->execute([
-                $new_member_id,
-                '🎉 歡迎加入 UniCare！',
-                '恭喜您獲得新會員禮 500 點積分！已自動發放至您的帳戶。'
-            ]);
-        } catch (Exception $e) {
-            // 通知失敗只紀錄 Log，不回傳error，因為註冊成功
-            error_log("通知與積分發送失敗: " . $e->getMessage());
-        }
-    }
 
     // 最後統一回傳成功訊息
     echo json_encode(["status" => "success", "message" => "註冊成功"]);
