@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+ob_start();
 require_once __DIR__ . '/../common/cors.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -11,24 +12,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   exit;
 }
 
-require_once __DIR__ . '/../common/connect_cjd102g1.php'; 
+require_once __DIR__ . '/../common/connect_cjd102g1.php';
 session_start();
 
-$memberId = (int)($_SESSION['member_id'] ?? 1);
-
+$memberId = (int)($_GET['member_id'] ?? ($_POST['member_id'] ?? ($_SESSION['member_id'] ?? 0)));
 if ($memberId <= 0) {
-  $isLocal = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
-  $memberId = (int)($_POST['member_id'] ?? 1);
-
-  if (!$isLocal || $memberId <= 0) {
-    http_response_code(401);
-    ob_clean();
-    echo json_encode(['error' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
-    exit;
-  }
+  http_response_code(401);
+  ob_clean();
+  echo json_encode(['error' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
+  exit;
 }
 
-$medicationId = (int)($_POST['medication_id'] ?? 0);
+$medicationId = (int)($_POST['medication_id'] ?? ($_GET['medication_id'] ?? 0));
 if ($medicationId <= 0) {
   http_response_code(400);
   ob_clean();
@@ -59,7 +54,6 @@ try {
 
   $pdo->beginTransaction();
 
-  
   $set = [];
   $params = [':mid' => $medicationId, ':member_id' => $memberId];
 
@@ -144,7 +138,6 @@ try {
     $params[':is_active'] = $ia;
   }
 
-  
   $photoUrl = $current['photo_url'] ?? null;
   $savedAbsPath = null;
 
@@ -168,14 +161,28 @@ try {
       exit;
     }
 
-    $finfo = new finfo(FILEINFO_MIME_TYPE);
-    $mime  = $finfo->file($_FILES['photo']['tmp_name']);
+    $mime = null;
+    if (function_exists('mime_content_type')) {
+      $mime = mime_content_type($_FILES['photo']['tmp_name']);
+    } elseif (function_exists('exif_imagetype')) {
+      $imgType = exif_imagetype($_FILES['photo']['tmp_name']);
+      $map = [
+        IMAGETYPE_JPEG => 'image/jpeg',
+        IMAGETYPE_PNG  => 'image/png',
+        IMAGETYPE_WEBP => 'image/webp',
+      ];
+      $mime = $map[$imgType] ?? null;
+    } else {
+      $imgInfo = getimagesize($_FILES['photo']['tmp_name']);
+      $mime = $imgInfo['mime'] ?? null;
+    }
+
     $allow = [
       'image/jpeg' => 'jpg',
       'image/png'  => 'png',
       'image/webp' => 'webp',
     ];
-    if (!isset($allow[$mime])) {
+    if (!$mime || !isset($allow[$mime])) {
       http_response_code(400);
       $pdo->rollBack();
       ob_clean();
@@ -226,7 +233,6 @@ try {
     $stmt->execute($params);
   }
 
-  
   $map = [
     'morning'   => 'MORNING',
     'noon'      => 'NOON',

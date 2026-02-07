@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
 session_start();
-$memberId = (int)($_SESSION['member_id'] ?? ($_GET['member_id'] ?? 1));
+$memberId = (int)($_GET['member_id'] ?? ($_POST['member_id'] ?? ($_SESSION['member_id'] ?? 0)));
 $category = (string)($_GET['category'] ?? '藥品');
 
 if ($memberId <= 0) {
