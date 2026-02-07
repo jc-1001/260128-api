@@ -2,7 +2,9 @@
 require_once __DIR__ . '/../common/cors.php';
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
-$member_id = 1;
+// $member_id = 1;
+// 會員大改
+$member_id = isset($_GET['member_id']) ? intval($_GET['member_id']) : 0;
 
 try {
   $sql = "SELECT * FROM orders WHERE member_id = ? ORDER BY created_at DESC";

@@ -41,7 +41,7 @@ try {
       'time_field' => 'measured_at'
     ],
     'heart_rate' => [
-      'table' => 'blood_pressure_logs',  // 🔥 心律在血壓表中
+      'table' => 'blood_pressure_logs',
       'id_field' => 'bp_log_id',
       'value_fields' => ['heart_rate', 'systolic_pressure', 'diastolic_pressure'],
       'time_field' => 'measured_at'
@@ -51,6 +51,13 @@ try {
       'id_field' => 'bp_log_id',
       'value_fields' => ['heart_rate', 'systolic_pressure', 'diastolic_pressure'],
       'time_field' => 'measured_at'
+    ],
+    // 🔥 新增：取得會員基本資料（身高和體重）
+    'member_info' => [
+      'table' => 'members',  // 假設會員資料表叫 members，請依實際資料表名稱修改
+      'id_field' => 'member_id',
+      'value_fields' => ['height', 'weight'],
+      'time_field' => null  // 會員基本資料沒有時間欄位
     ]
   ];
 
@@ -58,29 +65,47 @@ try {
     http_response_code(400);
     echo json_encode([
       'error' => true,
-      'message' => '無效的指標類型：' . $type,
+      'message' => '無效的指標類型:' . $type,
       'valid_types' => array_keys($metricsConfig)
     ], JSON_UNESCAPED_UNICODE);
     exit();
   }
 
   $config = $metricsConfig[$type];
-  $selectFields = [$config['id_field'], 'member_id'];
-  $selectFields = array_merge($selectFields, $config['value_fields']);
+  
+  // 🔥 特殊處理：member_info 不需要時間欄位
+  if ($type === 'member_info') {
+    $selectFields = array_merge([$config['id_field']], $config['value_fields']);
+    $sql = "SELECT " . implode(', ', $selectFields) . "
+            FROM {$config['table']} 
+            WHERE member_id = :member_id 
+            LIMIT 1";
+  } else {
+    $selectFields = [$config['id_field'], 'member_id'];
+    $selectFields = array_merge($selectFields, $config['value_fields']);
 
-  $sql = "SELECT 
+    $sql = "SELECT 
                 " . implode(', ', $selectFields) . ",
                 DATE_FORMAT({$config['time_field']}, '%Y-%m-%d %H:%i') as recorded_at
             FROM {$config['table']} 
             WHERE member_id = :member_id 
             ORDER BY {$config['time_field']} DESC";
+  }
 
   $stmt = $pdo->prepare($sql);
   $stmt->execute(['member_id' => $member_id]);
-  $results = $stmt->fetchAll();
-
-  if (empty($results)) {
-    $results = [];
+  
+  // 🔥 member_info 只取一筆資料
+  if ($type === 'member_info') {
+    $results = $stmt->fetch();
+    if (!$results) {
+      $results = ['height' => null, 'weight' => null];
+    }
+  } else {
+    $results = $stmt->fetchAll();
+    if (empty($results)) {
+      $results = [];
+    }
   }
 
   http_response_code(200);

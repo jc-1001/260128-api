@@ -50,13 +50,40 @@ if ($data && isset($data['email'])) {
         }
 
         $pdo->commit();
-        echo json_encode(["status" => "success", "message" => "更新成功"]);
+
+        // 重新撈取更新後的完整資料
+        $stmt_refetch = $pdo->prepare("
+            SELECT 
+                m.*, 
+                ec.contact_name, 
+                ec.relationship, 
+                ec.phone_number AS emergency_phone_number 
+            FROM members m 
+            LEFT JOIN emergency_contacts ec ON m.member_id = ec.member_id 
+            WHERE m.email = ?
+        ");
+        $stmt_refetch->execute([$data['email']]);
+        $updatedUser = $stmt_refetch->fetch(PDO::FETCH_ASSOC);
+
+        // 安全起見，不將密碼回傳給前端
+        if ($updatedUser) {
+            unset($updatedUser['password']);
+        }
+
+        echo json_encode([
+            "status" => "success",
+            "message" => "更新成功",
+            "user" => $updatedUser // 回傳最新資料供前端更新 LocalStorage
+        ]);
 
     } catch (PDOException $e) {
-        $pdo->rollBack();
-        echo json_encode(["status" => "error", "message" => "更新失敗: " . $e->getMessage()]);
+        // 如果失敗就回滾
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        echo json_encode(["status" => "error", "message" => "更新失敗：" . $e->getMessage()]);
     }
 } else {
-    echo json_encode(["status" => "error", "message" => "無效的資料"]);
+    echo json_encode(["status" => "error", "message" => "參數不足"]);
 }
 ?>

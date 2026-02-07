@@ -29,36 +29,15 @@ exit;
 
 try {
 $sql = "
-SELECT
-m.member_id,
-m.email,
-m.password,
-m.full_name,
-m.phone_number,
-m.gender,
-m.birth_date,
-m.role,
-m.account_status,
-m.created_at,
-m.updated_at,
-m.last_login_at,
-m.height,
-m.weight,
-m.blood_type,
-m.has_chronic_disease,
-m.chronic_disease_description,
-m.has_family_history,
-m.family_history_description,
-m.has_allergies,
-m.allergy_description,
-m.is_smoking,
-m.is_drinking,
-m.current_points,
-m.points_updated_at
+SELECT 
+    m.*, 
+    ec.contact_name, 
+    ec.relationship, 
+    ec.phone_number AS emergency_phone_number
 FROM members m
-WHERE m.email = ?
-LIMIT 1
-";
+LEFT JOIN emergency_contacts ec ON m.member_id = ec.member_id
+WHERE m.email = ? 
+LIMIT 1";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$email]);

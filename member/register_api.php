@@ -17,6 +17,17 @@ $json = file_get_contents('php://input');
 $data = json_decode($json, true);
 
 if ($data) {
+
+    //檢查身高與體重
+    if (empty($data['height']) || empty($data['weight'])) {
+        echo json_encode([
+            "status" => "error", 
+            "message" => "身高與體重為必填欄位"
+        ]);
+
+        exit; // 中斷執行，不進入資料庫流程
+    }
+    
     try {
         // 1. 檢查帳號是否重複
         $checkStmt = $pdo->prepare("SELECT email FROM members WHERE email = ?");
@@ -59,8 +70,9 @@ if ($data) {
             $data['gender'] ?? 'M',
             (!empty($data['birth_date'])) ? $data['birth_date'] : null,
             // ----------------------------------------------
-            $data['height'] ?? null,
-            $data['weight'] ?? null,
+            $data['height'],
+            $data['weight'],
+
             $data['blood_type'] ?? 'A',
             ($data['has_chronic_disease'] ?? false) ? 1 : 0,
             $data['chronic_disease_description'] ?? null,
