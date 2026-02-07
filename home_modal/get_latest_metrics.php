@@ -9,6 +9,9 @@ require_once __DIR__ . '/../common/connect_cjd102g1.php';
 // 1. 強制設定時區（確保與台灣時間一致）
 date_default_timezone_set('Asia/Taipei');
 $today = date('Y-m-d');
+
+$member_id = isset($_GET['mid']) ? intval($_GET['mid']) : 0;
+
 $stats = [
     '體重' => '--',
     '血氧' => '--',
@@ -17,13 +20,18 @@ $stats = [
     '心律' => '--',
     '身高' => '0'
 ];
-$member_id = 1;
+
+if($member_id<=0){
+    echo json_encode($stats);
+    exit;
+}
+
 
 try {
     // 取得會員身高
     $stmtHeight = $pdo->prepare("SELECT height FROM members WHERE member_id = :mid");
     $stmtHeight->execute(['mid' => $member_id]);
-    if ($h = $stmtHeight->fetchColumn()) $stats['身高'] = (float)$h;
+    if ($h = $stmtHeight->fetchColumn()) $stats['身高'] = (string)(float)$h;
     
     // 2. 使用參數化查詢並帶入 $today 變數
     // 血壓與心律

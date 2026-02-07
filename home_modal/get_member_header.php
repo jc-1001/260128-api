@@ -3,8 +3,16 @@
 require_once __DIR__ . '/../common/cors.php';
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
-// 之後要改
-$member_id = 1;
+// 接收前端傳來的 mid，並確保它是數字
+$member_id = isset($_GET['mid']) ? intval($_GET['mid']) : 0;
+
+if($member_id<=0){
+    echo json_encode([
+        'lastName'=>'訪客',
+        'title'=>'您好'
+    ]);
+    exit;
+}
 
 $sql = "SELECT full_name, gender FROM members WHERE member_id = :mid";
 $stmt = $pdo->prepare($sql);

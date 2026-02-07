@@ -13,12 +13,24 @@ $data = json_decode(file_get_contents("php://input"), true);
 // 基本檢查，避免空資料進入
 if (!$data || !isset($data['type'])) {
     http_response_code(400);
-    echo json_encode(["err" => "無效的請求資料"]);
+    echo json_encode([
+        "err" => "無效的請求資料",
+        "received_id" => $member_id, 
+        "received_type" => $type
+    ]);
     exit;
 }
 $type = $data['type']; // weight, bloodOxygen, bloodSugar, bloodPressure
 $val = $data['payload'];
-$member_id = 1; // 實務上應從 session 或 token 取得(之後要改)
+
+$member_id = isset($data['member_id']) ? intval($data['member_id']) : 0;
+
+if (!$data || !isset($data['type']) || $member_id <= 0) {
+    http_response_code(400);
+    echo $data;
+    echo json_encode(["err" => "無效的請求資料或未提供會員 ID"]);
+    exit;
+}
 
 try {
     if ($type === 'bloodPressure') {

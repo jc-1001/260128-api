@@ -13,24 +13,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
     $input = json_decode($rawInput, true);
 
     $noteId = $input['notification_id'] ?? null;
+    $mid = $_GET['mid'] ?? null; // 從 URL 抓取 mid
 
     // 檢查是不是有個人通知資料表的主鍵(id)
-    if (!$noteId) {
-        echo json_encode(['error' => '缺少個人通知ID']);
+    if (!$noteId || $mid) {
         http_response_code(400);
+        echo json_encode(['error' => '缺少個人通知ID']);
         exit;
     }
     // 資料庫要變更is_read欄位，並對準該會員的ID
     // 執行更新
     try {
-        $sql = "UPDATE notifications SET is_read = 1 WHERE notification_id = :id";
+        $sql = "UPDATE notifications SET is_read = 1 WHERE notification_id = :id AND member_id = :mid";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute(['id' => $noteId]);
+        $stmt->execute(['id' => $noteId ,'mid' => $mid]);
 
 
         header('Content-Type: application/json'); // 確保回傳也是 JSON
         echo json_encode(['status' => 'success', 'message' => '訊息已讀']);
-
     } catch (Exception $e) {
         echo json_encode(["error" => $e->getMessage()]);
         http_response_code(500);
