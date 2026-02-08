@@ -5,7 +5,9 @@ require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
 
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { exit; }
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit;
+}
 
 $data = json_decode(file_get_contents("php://input"), true);
 
@@ -18,7 +20,7 @@ if ($data && isset($data['email'])) {
             full_name = ?, phone_number = ?, gender = ?, birth_date = ?, 
             blood_type = ?, height = ?, weight = ?
             WHERE email = ?";
-        
+
         $stmt_member = $pdo->prepare($sql_member);
         $stmt_member->execute([
             $data['full_name'],
@@ -36,17 +38,38 @@ if ($data && isset($data['email'])) {
         $stmt_id->execute([$data['email']]);
         $member_id = $stmt_id->fetchColumn();
 
+        // 因為緊急聯絡人裡資料表的欄位不是必填，所以直接update會沒辦法更新到資料，所以先檢查有沒有資料，如果有就update，沒有就insert __BY:游
         if ($member_id) {
-            $sql_contact = "UPDATE emergency_contacts SET 
-                contact_name = ?, relationship = ?, phone_number = ?
-                WHERE member_id = ?";
-            $stmt_contact = $pdo->prepare($sql_contact);
-            $stmt_contact->execute([
-                $data['contact_name'],
-                $data['relationship'],
-                $data['emergency_phone_number'],
-                $member_id
-            ]);
+            // 檢查該會員是否已經有聯絡人紀錄
+            $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM emergency_contacts WHERE member_id = ?");
+            $stmt_check->execute([$member_id]);
+            $exists = $stmt_check->fetchColumn();
+
+            if ($exists) {
+                // 如果已存在，執行更新
+                $sql_contact = "UPDATE emergency_contacts SET 
+            contact_name = ?, relationship = ?, phone_number = ?
+            WHERE member_id = ?";
+                $stmt_contact = $pdo->prepare($sql_contact);
+                $stmt_contact->execute([
+                    $data['contact_name'],
+                    $data['relationship'],
+                    $data['emergency_phone_number'],
+                    $member_id
+                ]);
+            } else {
+                // 如果不存在，執行新增
+                $sql_insert_contact = "INSERT INTO emergency_contacts 
+            (member_id, contact_name, relationship, phone_number) 
+            VALUES (?, ?, ?, ?)";
+                $stmt_insert = $pdo->prepare($sql_insert_contact);
+                $stmt_insert->execute([
+                    $member_id,
+                    $data['contact_name'],
+                    $data['relationship'],
+                    $data['emergency_phone_number']
+                ]);
+            }
         }
 
         $pdo->commit();
@@ -75,7 +98,6 @@ if ($data && isset($data['email'])) {
             "message" => "更新成功",
             "user" => $updatedUser // 回傳最新資料供前端更新 LocalStorage
         ]);
-
     } catch (PDOException $e) {
         // 如果失敗就回滾
         if ($pdo->inTransaction()) {
@@ -86,4 +108,3 @@ if ($data && isset($data['email'])) {
 } else {
     echo json_encode(["status" => "error", "message" => "參數不足"]);
 }
-?>
