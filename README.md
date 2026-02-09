@@ -5,7 +5,7 @@
 ![PHP](https://img.shields.io/badge/PHP-777BB4?style=flat&logo=php&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat&logo=mysql&logoColor=white)
 
-![UniCare Logo](./src/assets/images/github_banner.png) 
+![UniCare Logo](./github_banner.png) 
 
 > **遠端守護，聯合照顧** —— 結合醫療保健產品與長者慢性身體數據紀錄的全方位照護平台。
 
