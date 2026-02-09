@@ -8,8 +8,6 @@ require_once __DIR__ . '/../common/connect_cjd102g1.php';
 // 取得網址上的 id 參數
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0; 
 
-// $member_id = 1;
-// 會員大改 =============
 $member_id = isset($_GET['member_id']) ? intval($_GET['member_id']) : 0;
 
 if( $id > 0 ) {
