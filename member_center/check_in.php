@@ -2,22 +2,19 @@
 require_once __DIR__ . '/../common/cors.php';
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
-// 會員大改 =============
+
 $data = json_decode(file_get_contents('php://input'), true);
 $member_id = isset($data['member_id']) ? intval($data['member_id']) : 0;
-// $member_id = 1;
 
 // 簽到會得到的獎勵積分
 $reward_points = 50;
 
 try {
   // 檢查今日是否已簽到
-  // CURDATE()?
   $sql_check = "SELECT * FROM point_transactions WHERE member_id = ? AND source = 2 AND  DATE(created_at) = CURDATE()";
   $stmt_check = $pdo->prepare($sql_check);
   $stmt_check->execute([$member_id]);
 
-  // rowCount?
   if($stmt_check->rowCount() > 0) {
     echo json_encode([
       'success' => false,

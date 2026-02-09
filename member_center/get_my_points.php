@@ -2,8 +2,7 @@
 require_once __DIR__ . '/../common/cors.php';
 require_once __DIR__ . '/../common/connect_cjd102g1.php';
 
-// $member_id = 1;
-// 會員大改
+
 $member_id = isset($_GET['member_id']) ? intval($_GET['member_id']) : 0;
 
 try {
@@ -23,6 +22,7 @@ try {
     if($row['source'] == 1) $title = '會員註冊禮';
     if($row['source'] == 2) $title = '每日簽到獎勵';
     if($row['source'] == 3) $title = '購物折抵';
+    if($row['source'] == 4) $title = '有獎徵答獎勵';
 
     $history[] = [
       'id' => $row['point_log_id'],
