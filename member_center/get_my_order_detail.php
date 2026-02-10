@@ -26,7 +26,7 @@ if( $id > 0 ) {
 
     // 抓取訂單細節
     // 這邊要連結 order_items 和 products 兩個表格
-    $sql_items = "SELECT oi.product_name AS title, oi.price, oi.quantity AS qty, oi.product_spec AS spec, p.image FROM order_items oi LEFT JOIN products p ON oi.product_id  = p.product_id WHERE oi.order_id = ?";
+    $sql_items = "SELECT oi.product_id, oi.product_name AS title, oi.price, oi.quantity AS qty, oi.product_spec AS spec, p.image FROM order_items oi LEFT JOIN products p ON oi.product_id  = p.product_id WHERE oi.order_id = ?";
     $stmt_items = $pdo->prepare($sql_items);
     $stmt_items->execute([$id]);
 
