@@ -53,10 +53,10 @@ echo json_encode(["status" => "error", "message" => "該帳號已被停用"], JS
 exit;
 }
 
-// 明碼比對（暫時）
-if ($user['password'] !== $password) {
-echo json_encode(["status" => "error", "message" => "帳號或密碼錯誤"], JSON_UNESCAPED_UNICODE);
-exit;
+// 明碼>驗證加密字串
+if (!password_verify($password, $user['password'])) {
+    echo json_encode(["status" => "error", "message" => "帳號或密碼錯誤"], JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 unset($user['password']); // 不回傳密碼

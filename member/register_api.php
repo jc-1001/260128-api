@@ -60,11 +60,14 @@ if ($data) {
         // 開啟事務處理
         $pdo->beginTransaction();
 
+        // PHP 內建加密
+        $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
+
         // 寫入會員
         $stmt_member = $pdo->prepare($sql_member);
         $stmt_member->execute([
             $data['email'],
-            $data['password'],
+            $hashed_password, // 
             $data['full_name'],
             $data['phone_number'] ?? null,
             $data['gender'] ?? 'M',
