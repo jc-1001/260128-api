@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
     $mid = $_GET['mid'] ?? null; // 從 URL 抓取 mid
 
     // 檢查是不是有個人通知資料表的主鍵(id)
-    if (!$noteId || $mid) {
+    if (!$noteId || !$mid) {
         http_response_code(400);
         echo json_encode(['error' => '缺少個人通知ID']);
         exit;

@@ -71,10 +71,16 @@ try {
   // 跑迴圈抓購物車的每個商品
   foreach ($data['items'] as $item) {
 
+    $productId = $item['id'] ?? $item['product_id'] ?? null;
+
+    if (!$productId) {
+        throw new Exception("商品資料錯誤：找不到 product_id");
+    }
+
     // 寫入 order_items (存成當前的商品快照)
     $stmt_item->execute([
       $new_order_id,
-      $item['id'],
+      $productId,
       $item['title'],
       $item['spec'],
       $item['price'],
@@ -83,7 +89,7 @@ try {
     // 找到購買商品，扣除庫存量
     $stmt_stock->execute([
       $item['qty'],
-      $item['id']
+      $productId
     ]);
   }
 

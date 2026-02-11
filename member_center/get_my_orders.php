@@ -18,7 +18,7 @@ try {
   foreach ($orders as $row) {
     $order_id = $row['order_id'];
 
-    $sql_items = "SELECT oi.product_name AS title, oi.product_spec AS spec, oi.quantity AS qty, oi.price, p.image FROM order_items oi LEFT JOIN products p ON oi.product_id = p.product_id WHERE oi.order_id = ?";
+    $sql_items = "SELECT oi.product_id, oi.product_name AS title, oi.product_spec AS spec, oi.quantity AS qty, oi.price, p.image FROM order_items oi LEFT JOIN products p ON oi.product_id = p.product_id WHERE oi.order_id = ?";
     $stmt_items = $pdo->prepare($sql_items);
     $stmt_items->execute([$order_id]);
     $items = $stmt_items->fetchAll(PDO::FETCH_ASSOC);
