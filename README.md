@@ -20,8 +20,8 @@
 ## 相關連結
 
 * [專案正式上線網址](https://tibamef2e.com/cjd102/g1/)
-* [專案 Demo 影片](https://www.google.com/search?q=https://youtube.com/...)
-* [系統分析文件](https://drive.google.com/file/d/1AA18ODrwgjLmlsjEHNaUZL2IwZqd6rO-/view)
+* [專案 Demo 影片](https://www.youtube.com/watch?v=gmjjA5XzkfI)
+* [系統分析文件](https://drive.google.com/file/d/1TdtbJRxwT3sn_TVN5yfV1yxwyiqeclA-/view)
 * [Figma連結](https://www.figma.com/design/X78x31tK2e6S5C17o5cA0N/%E5%9C%98%E9%AB%94%E5%B0%88%E9%A1%8C%E8%A8%AD%E8%A8%88%E6%AD%A3%E5%BC%8F-%E5%A4%9A%E9%A0%81%E9%9D%A2-?node-id=0-4&t=FtUkNAqiQ6REpRAA-1)
 
 ---
